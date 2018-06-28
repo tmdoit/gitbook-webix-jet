@@ -310,14 +310,48 @@ Let's recap main differences of the three ways to load and save data:
 You can use services instead of models as data sources. Suppose there is a list of customers and a grid that displays records on a selected customer. Here is how you can use a service that returns the ID of a selected list item:
 
 ```javascript
-var id = service.getSelected();
-var data = records.getData(id);
+//models/records.js
+let data = new webix.DataCollection({
+    data:[
+        { id:1, data:[...] },
+        { id:2, data:[...] },
+        { id:3, data:[...] }
+    ]
+});
+export function records(app){
+    const records = {
+        setSelected(id){
+            this.selected = id;
+        },
+        getRecords(){
+            return (this.records.exists(this.selected)) ? this.records.getItem(this.selected).data : [];
+        },
+        records:data,
+        selected:0
+    };
+    app.setService("records", records);
+}
 ```
 
-A better and shorter way is:
+The list instantiates the service and sets the selected item:
 
 ```javascript
-var data = service.getNomenclature();
+// views/list.js
+import {records} from "models/records";
+...
+records(this.app);
+...
+let service = this.app.getService("records");
+//in select event handler
+service.setSelected(id);
+```
+
+The grid gets the records of the item:
+
+```javascript
+// views/grid.js
+let service = this.app.getService("records");
+var data = service.getRecords();
 ```
 
 ## 5. Using Webix Remote with Webix Jet
