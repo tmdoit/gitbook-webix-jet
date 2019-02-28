@@ -1,5 +1,36 @@
 # What's New
 
+## Version 2.0 - February 21, 2019
+
+### New Features
+
+* The ability to [show views in new windows](part-ii-webix-jet-in-details/jetview-api.md#showing-a-subview-in-a-new-window)
+* The ability to show windows like other views by [including them in the app URL](part-ii-webix-jet-in-details/popups-and-windows.md#including-windows-in-the-app-url)
+* Several same-level subviews can have their [own app URLs](part-ii-webix-jet-in-details/views-and-subviews.md#3-several-dynamic-subviews) and work independently of each other
+* *Menu plugin* can change [URL parameters](part-ii-webix-jet-in-details/plugins.md#using-the-plugin-to-change-url-parameters)
+* *User plugin*: the ability to [add several pages accessible for non-authorized users](part-ii-webix-jet-in-details/plugins.md#adding-public-pages)
+* *Locale plugin*: additional configuration property for [setting Webix locales](part-ii-webix-jet-in-details/plugins.md#combining-with-webix-locales)
+* *Locale plugin*: the ability to [split localization and load parts on demand](part-ii-webix-jet-in-details/plugins.md#splitting-localization)
+* *Locale plugin*: the ability to [configure Polyglot](part-ii-webix-jet-in-details/plugins.md#configuring-polyglot)
+* *Locale plugin*: the ability to [disable locale loading from jet-locales](part-ii-webix-jet-in-details/plugins.md#path-for-the-locale-plugin)
+* [*UrlRouter*](part-ii-webix-jet-in-details/routers.md#2-url-router) shares the same settings with [*HashRouter*](part-ii-webix-jet-in-details/routers.md#1-hash-router-default)
+* Webix Jet supports IE11+
+* *HashRouter* works more stable during in-browser navigation
+* New [*SubRouter*](part-ii-webix-jet-in-details/routers.md#5-sub-router) that enables navigation in sub-modules
+* The ability to use Webix Jet [without Webpack](part-iii-practical-tasks/using-webix-jet-without-webpack.md)
+* The ability to [import Webix code as a module](part-iii-practical-tasks/importing-webix-as-module.md)
+
+### Changes in API and Inner Logic
+
+* [*getUrl()*](part-ii-webix-jet-in-details/jetview-api.md#this-geturl) and [*getUrlString()*](part-ii-webix-jet-in-details/jetview-api.md#this-geturlstring) for [app](part-ii-webix-jet-in-details/jetapp-api.md#app-geturl) and view
+* *removeView()* of Webix widgets triggers *destroy()* of the Jet views inside them
+* [*getSubView()*](part-ii-webix-jet-in-details/jetapp-api.md#app-getsubview) and [*contains()*](part-ii-webix-jet-in-details/jetapp-api.md#app-contains) can be called for JetApp
+* The **refresh()** method for app and view returns a promise
+* *view.refresh()* works for views with sub-elements
+* *app.refresh()* works when an app is inside a Webix Jet view
+* *app.refresh()* triggers refresh of the top view instead of using its own custom logic
+* The order of destroy and init events: first, the old view is destroyed, then the new view is initialized
+
 ## Version 1.6 - June 26, 2018
 
 * new [WJET utility](part-iii-practical-tasks/wjet-utility-for-faster-prototyping.md) for faster prototyping
@@ -42,7 +73,7 @@
 Major update after version 0.5:
 
 * [views](part-i-basic-usage/creating-views.md) and [app modules](part-i-basic-usage/creating-apps.md) as ES6 classes
-* using [Webpack](part-iii-practical-tasks/webpack-configuration.md) as a module bundler
+* using [Webpack]() as a module bundler
 * ability to choose among [4 routers](part-ii-webix-jet-in-details/routers.md)
 * ability to use [6 plugins](part-ii-webix-jet-in-details/plugins.md) for common tasks
 

@@ -2,38 +2,36 @@
 
 ## Toolchain and App
 
-* You need to add _webpack.config.js_ and package.json similar to [https://github.com/webix-hub/jet-start](https://github.com/webix-hub/jet-start) 
-
-If you already have _package.json_ in your project, just add the missed dependencies.
+* Setup the [wjet](https://webix.gitbook.io/webix-jet/part-iii-practical-tasks/wjet-utility-for-faster-prototyping) tool from the link.
+* Create a new `webix-jet` app using:
 
 ```text
-npm install --save-dev wjet babel-core babel-loader babel-preset-env css-loader file-loader less less-loader url-loader webpack webpack-dev-server extract-text-webpack-plugin
-npm install webix-jet
-
-//or
-
-yarn add -D wjet babel-core babel-loader babel-preset-env css-loader file-loader less less-loader url-loader webpack webpack-dev-server extract-text-webpack-plugin
-yarn add webix-jet
+mkdir new-app // this will be your new application folder when migration is finished.
+cd new-app
+wjet init
+npm install
 ```
 
-* create folder sources and move all dev files there \( _app.js_, _models/_, _views/_, _helpers/_, etc. \)
-* in _webpack.config.json_ change the entry field to the main file of your app \(`entry: "sources/app.js"`\)
-* update app.js similar to [https://github.com/webix-hub/jet-start/blob/master/sources/myapp.js](https://github.com/webix-hub/jet-start/blob/master/sources/myapp.js)
-  * import JetApp
-  * replace `core.create` with `new JetApp`
-  * remove `view.use` commands if any
-  * add `app.render()` call
-* run the app 
+* In your original app, create the **sources** folder and move all the dev files there \( _app.js_, _models/_, _views/_, _helpers/_, etc. \).
+* Copy the `app.js` file from `new-app` you created above to the `sources` folder. If you have any custom code in your original `app.js` then copy that in the newer `app.js` too.
+* Copy the `sources` folder to the `new-app`.
+* Make sure that there is the **locales** folder with you localization files in `new-app`. [Check this repo for example](https://github.com/webix-hub/jet-start/tree/master/sources/locales).
+* run the app.
 
 ```text
 npm start
 ```
 
-* open app at _localhost:8080_
+* open the app at _localhost:8080_.
+
+## Troubleshooting
+
+* If you get `can not resolve` error in webpack, make sure you add the alias and the path to the lib in question in **webpack.config.js**. [Check the docs](https://webpack.js.org/configuration/resolve/).
+* If something else goes wrong, use the [starter jet repo](https://github.com/webix-hub/jet-start) as the base for migration and replace the sources folder as above.
 
 ## Migrating views
 
-Jet 1.x can recognize old configuration objects and use them correctly, so you will need not to change anything in a common case. There are still some scenarios when you will need to change the code:
+Jet 1.x can recognize old configuration objects and use them correctly, so you will not need to change anything in a common case. There are still some scenarios when you will need to change the code:
 
 ### View has "app" as dependency
 

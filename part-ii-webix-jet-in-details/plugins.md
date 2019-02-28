@@ -61,15 +61,14 @@ Subview URLs are taken from menu option IDs or from values if there are no IDs. 
 ```javascript
 // views/top.js
 import {JetView} from "webix-jet";
-
 export default class TopView extends JetView {
     config(){
         return {
             rows:[
                 {
                     view:"menu", localId:"menu", data:[
-                        { id:"details", value:"Details"},  //show "/top/demo/details"
-                        { id:"dash", value:"Dash" }        //show "/top/dash"
+                        { id:"details", value:"Details" },  //show "/top/demo/details"
+                        { id:"dash", value:"Dash" }         //show "/top/dash"
                     ]
                 },
                 { $subview:true }
@@ -89,6 +88,53 @@ export default class TopView extends JetView {
 ```
 
 [Check out the demo &gt;&gt;](https://github.com/webix-hub/jet-start/blob/master/sources/views/top.js)
+
+#### Using the Plugin to Change URL Parameters
+
+You can set the Menu plugin in the way that it does not go to a different path, but changes a certain URL parameter. Use the **param** config setting for this. **param** accepts a string with the parameter name, e.g.:
+
+```js
+// views/top.js
+import {JetView} from "webix-jet";
+export default class TopView extends JetView {
+    config(){
+        return {
+            rows:[
+                {
+                    view:"list", localId:"users", data:[
+                        { id:"1", value:"Jason Daniels" },  //show "/top?user=1"
+                        { id:"2", value:"Kittie Stark" }    //show "/top?user=2"
+                    ]
+                },
+                { /* ...UI */ }
+            ]
+
+        };
+    }
+    init(){
+		this.use(plugins.Menu, {
+			id:"users",
+			param:"user"
+		});
+	}
+}
+```
+
+If you use the Menu plugin with param setting together with the [UrlParam](#urlparam-plugin), the parameter will be displayed in the URL as a URL segment:
+
+```js
+// views/top.js
+init(){
+	this.use(plugins.UrlParam, ["user"]);
+	this.use(plugins.Menu, {
+		id:"users",
+		param:"user"
+	});
+}
+
+//show "/top/1"
+//show "/top/2"
+```
 
 ### UnloadGuard Plugin
 
@@ -114,7 +160,9 @@ init(){
 * the plugin name
 * the function that will define the behavior of the plugin
 
-The _UnloadGuard_ plugin can be used for form validation, for example. Let's have a look at a form with one input field that must not be empty:
+The _UnloadGuard_ plugin expects a function that returns *true* if the access must be granted and *false* if not. The function can also return a promise, resolved and rejected correspondingly.
+
+_UnloadGuard_ can be used for form validation, for example. Let's have a look at a form with one input field that must not be empty:
 
 ```javascript
 // views/form.js
@@ -132,27 +180,24 @@ export default class FormView extends JetView {
 }
 ```
 
-Let's enable the _UnloadGuard_ plugin and show a confirmation window if the input is invalid:
+Let's enable _UnloadGuard_ and show a confirmation window if the input is invalid. Webix confirmation windows and other modal boxes [return promises](https://docs.webix.com/desktop__message_boxes.html#modalmessageboxes).
 
 ```javascript
 // views/form.js
 ...
 init(){
-    this.use(plugins.UnloadGuard, () => {
-        if (this.getRoot().validate())
-            return true;
-
-        return new Promise((res, rej) => {
-            webix.confirm({
-                text: "Are you sure?",
-                callback: a => a ? res() : rej()
-            });
-        });
+    this.use(plugins.UnloadGuard, () => { 
+		if (this.$$("form").validate())
+			return true;
+		return webix.confirm({
+			title:"Form is incomplete",
+			text: "Do you still want to leave?"
+		});
     });
 }
 ```
 
-If the form input is not valid, the function returns a promise with a dialogue window. Depending on the answer, the promise either resolves and _UnloadGuard_ lets the user go to the next view, or it rejects. No pasaran.
+If the form input is not valid, the function returns a promise. Depending on the answer, the promise either resolves and _UnloadGuard_ lets the user go to the next view, or it rejects. No pasaran.
 
 [Check out the demo &gt;&gt;](https://github.com/webix-hub/jet-demos/blob/master/sources/plugins-unload.js)
 
@@ -217,12 +262,12 @@ this.use(plugins.Status, {
 
 ### UrlParam Plugin
 
-The plugin allows using the URL fragments as parameters. It makes them accessible via [view.getParam\(\)](jetview-api.md#this-getparam) and correctly weeds them out of the URL.
+The plugin allows treating URL segments as parameters. It makes them accessible via [view.getParam\(\)](jetview-api.md#this-getparam) and correctly weeds them out of the URL.
 
 **UrlParam** is enabled with [this.use\(\)](jetview-api.md#this-use) with two parameters:
 
 * the plugin name;
-* an array with parameter\(s\).
+* an array with parameter name\(s\).
 
 Let's consider a simple example with a parent view **some** and its child **details**:
 
@@ -244,23 +289,22 @@ const details = { template:"Details" };
 export default details;
 ```
 
-When loading the URL _"/some/23/details"_, you need to treat _23_ as a parameter of **some**. Enable the plugin the [init\(\)](views-and-subviews.md#init-view-url) method of **some**:
+When loading the URL _"/some/23/details"_, you need to treat the segment after **some** (_23_) as a parameter of **some**. Enable the plugin in the [init\(\)](views-and-subviews.md#init-view-url) method of **some**:
 
 ```javascript
 // views/some.js
 import {JetView,plugins} from "webix-jet";
-
 export default class SomeView extends JetView{
-   ...
-   init(){
-       this.use(plugins.UrlParam, ["id"])
-       // now when loading /some/23/details
-       var id = this.getParam("id");//id === 23
-   }
+   	...
+   	init(){
+		this.use(plugins.UrlParam, ["id"])
+		// now when loading /some/23/details
+		var id = this.getParam("id"); //id === 23
+   	}
 }
 ```
 
-**details** will be rendered inside **some**, and the fragment _23_ will be displayed in the address bar, but will not be resolved.
+**details** will be rendered inside **some**, and the fragment _23_ will be displayed in the address bar, but will not be resolved as a view module.
 
 [Check out the demo &gt;&gt;](https://github.com/webix-hub/jet-demos/blob/master/sources/urlparams.js)
 
@@ -274,26 +318,38 @@ The **User** plugin is useful for apps with authorization.
 
 This section contains guidelines for using the plugin with a custom script.
 
-**Enabling the Plugin**
+**Related demos:**
+
+* [Demo of authorization, custom PHP script](https://github.com/webix-hub/jet-start/tree/php)
+* [Webix Jet with NodeJS Express](https://github.com/webix-hub/jet-start/tree/node-express)
+
+##### Enabling the Plugin
 
 To enable the plugin, call [app.use\(\)](jetapp-api.md#app-use) with two parameters:
 
 * the plugin name,
 * the plugin configuration.
 
-The plugin configuration must contain at least the **session** model:
+##### The Session Model
 
-```javascript
-// myapp.js
-import {JetApp, plugins} from "webix-jet";
-import session from "models/session";
-...
-app.use(plugins.User, { model: session });
-```
+It is expected that the User plugin will be used with a specific session model configured by the developer according to the requirements needed for correct authorization.
 
-**The Session Model**
+The session model should contain three main methods:
 
-The plugin uses a **session** model, [check out an example](https://github.com/webix-hub/jet-start/blob/php/sources/models/session.js). The model contains requests to _php_ scripts for logging in, getting the current status, and logging out. The _session_ model includes the following functions:
+- login(), 
+- logout(), 
+- status().
+
+Each method should return a promise.
+
+Check out basic examples:
+
+- [PHP](https://github.com/webix-hub/jet-start/blob/php/sources/models/session.js).
+- [NodeJS Express](https://github.com/webix-hub/jet-start/blob/node-express/client/models/session.js)
+
+Both examples are nearly identical, all requests are implemented with **webix.ajax()**.
+
+E.g. the PHP session model contains requests to _php_ scripts for logging in, getting the current status, and logging out.
 
 * **status\(\)** returns the status of the current user
 
@@ -305,9 +361,14 @@ function status(){
 }
 ```
 
-* **login\(\)** logs the user in, returns an object with his/her access right settings, a promise of this object or _null_ if something went wrong. The parameters are:
-  * _user_ - username;
-  * _pass_ - password.
+* **login\(\)** logs the user in, returns an object with user access right settings, a promise of this object or _null_ if something went wrong.
+
+The parameters are:
+
+* _user_ - username;
+* _pass_ - password.
+
+**login()** must return a promise of user info.
 
 ```javascript
 // models/session.js
@@ -328,39 +389,68 @@ function logout(){
 }
 ```
 
-**Logging In**
+The session model is declared in the plugin configuration:
+
+```javascript
+// myapp.js
+import {JetApp, plugins} from "webix-jet";
+import session from "models/session";
+...
+app.use(plugins.User, { model: session });
+```
+
+##### Plugin Configuration
+
+Apart from the session model, the plugin configuration can include other settings:
+
+* **login** \(string\) is the URL of the login form, _"/login"_ by default;
+* **logout** \(string\) is the URL for logging out, _"/logout"_ by default;
+* **afterLogin** \(string\) is the URL shown after logging in, by default taken from *app.config.start*;
+* **afterLogout** \(string\) is the URL shown after logging out, _"/login"_ by default;
+* **user** (object) includes some default user credentials;
+* **ping** \(number\) is the time interval for checking the current user status, 30000 ms by default;
+* **public** (function) allows adding [pages accessible by unauthorized users](#adding-public-pages).
+
+```js
+app.use(plugins.User, {
+    model: session,
+    ping: 15000,
+    afterLogin: "someStartPage",
+    user: { /* ... */ }
+});
+```
+
+At this point, the User plugin will automatically redirect the user to the login page using the [built-in access guard](../part-iii-practical-tasks/jet-recipes#access-guard-app-level) until authorization succeeds.
+
+##### Logging In
 
 This is an example of a form for logging in:
 
 ```javascript
 // views/login.js
 import {JetView} from "webix-jet";
-
 export default class LoginView extends JetView{
-config(){
-    return {
-        view:"form",
-        rows:[
-            { view:"text", name:"login", label:"User Name", labelPosition:"top" },
-            { view:"text", type:"password", name:"pass", label:"Password", labelPosition:"top" },
-            { view:"button", value:"Login", click:()=>{
-                this.do_login(); //do_login() is implemented as a class method below
-            }, hotkey:"enter" }
-        ],
-        rules:{
-            login:webix.rules.isNotEmpty,
-            pass:webix.rules.isNotEmpty
-        }
-    };
+	config(){
+		return {
+			view:"form",
+			rows:[
+				{ view:"text", name:"login", label:"User Name" },
+				{ view:"text", type:"password", name:"pass", label:"Password" },
+				{ view:"button", value:"Login", click:() => {
+					this.do_login();
+					//do_login() calls user.login() and is implemented as a class method below
+				}, hotkey:"enter" }
+			],
+			rules:{
+				login:webix.rules.isNotEmpty,
+				pass:webix.rules.isNotEmpty
+			}
+		};
+	}
 }
 ```
 
-To implement logging in, you can use the **login\(\)** method of the _user_ service that is launched by the _User_ plugin. **login\(\)** must receive two parameters:
-
-* the username
-* the password
-
-**login\(\)** verifies them and if everything is fine, shows the _afterLogin_ page \(the start page by default\). Otherwise, it shows an error message.
+To implement logging in, you should call the **login\(\)** method of the plugin. Once **login()** is called and the response with some user credentials (JSON object with a name or a promise, for example) is received, the User plugin will automatically redirect the user to the specified start page and will consider the server response as user credentials.
 
 Let's define the **do\_login\(\)** method of _LoginView_ that will call **login\(\)**:
 
@@ -376,7 +466,7 @@ export default class LoginView extends JetView{
 
         if (form.validate()){
             const data = form.getValues();
-            user.login(data.login, data.pass).catch(function(){
+            user.login(data.login, data.pass).catch(function(xhr){
                 //error handler
             });
         }
@@ -390,31 +480,34 @@ export default class LoginView extends JetView{
 * The [complete _login.js_ file](https://github.com/webix-hub/jet-start/blob/php/sources/views/login.js);
 * The [demo on logging in with custom scripts](https://github.com/webix-hub/jet-start/tree/php).
 
-**Logging Out**
+##### Logging Out
 
 The **logout\(\)** method ends the current session and shows an _afterLogout_ page \(the login form by default\).
 
-**Getting User Info & Checking the User Status**
+##### Getting User Info & Checking the User Status
 
 The **getUser\(\)** method returns the data of the currently logged in user.
 
-The **getStatus\(\)** method returns the current status of the user. It can receive an optional Boolean parameter **server**: if it is set to _true_, the method will send an AJAX request to check the status.
+The **getStatus\(\)** method returns the current status of the user. It can receive an optional Boolean parameter the server: if it is set to _true_, the method will send an AJAX request to check the status.
 
-The **User** service checks every 5 minutes the current user status and warns a user if the status has been changed. For example, if a user logged in and didn't perform any actions on the page during some time, the service will check the status and warn the user if it has been changed.
+The User plugin checks every 5 minutes (time lapse is defined by the **ping** setting of the plugin) the current user status and warns a user if the status has been changed. For example, if a user logged in and didn't perform any actions on the page during some time, the plugin will check the status and warn the user if it has been changed.
 
-**Plugin Configuration**
+#### Adding Public Pages
 
-Apart from the session model, the plugin configuration can include other settings:
+By default, unauthorized users can see only the "login" page. You can add other pages that all users are allowed to access. Use the **public** setting of the plugin configuration object. **public** must be a function that returns *true* for public pages and *false* for the rest:
 
-* **login** \(string\) is the URL of the login form, _"/login"_ by default;
-* **logout** \(string\) is the URL for logging out, _"/logout"_ by default;
-* **afterLogin** \(string\) is the URL shown after logging in, the _start_ URL by default;
-* **afterLogout** \(string\) is the URL shown after logging out, _"/login"_ by default;
-* **ping** \(number\) is the time interval for checking the current user status, 5 minutes by default;
+```js
+app.use(plugins.User, {
+	model: session,
+	public: path => path.indexOf("top/data") > -1
+});
+```
 
-#### Login with an external OAuth service \( Google, GitHub, etc. \)
+#### Login with an external OAuth service \(Google, GitHub, etc.\)
 
-to be continued...
+If you need authorization with an OAuth service, you need to change the way to log in. **logout()** and **status()** in the session model are the same as for the custom script.
+
+[A demo of login with passport and Google OAuth2](https://github.com/webix-hub/jet-start/tree/node-passport)
 
 ### Theme plugin
 
@@ -523,7 +616,7 @@ This is a plugin for localizing apps.
 
 #### Enabling the Plugin
 
-You can enable the *Locale* plugin before the app is rendered:
+You can enable the _Locale_ plugin before the app is rendered:
 
 ```javascript
 // myapp.js
@@ -539,8 +632,8 @@ You must create files with all the text labels in English and their translations
 // locales/es.js
 export default {
     "My Profile" : "Mi Perfil",
-	"My Account" : "Mi Cuenta",
-	"My Calendar" : "Mi Calendario"
+    "My Account" : "Mi Cuenta",
+    "My Calendar" : "Mi Calendario"
 };
 ```
 
@@ -550,7 +643,7 @@ The default locale is English. You can change it while enabling the plugin:
 
 ```javascript
 // app.js
-app.use(plugins.Locale,{lang:"es"});
+app.use(plugins.Locale,{ lang:"es" });
 ```
 
 #### Applying the Locale
@@ -573,8 +666,8 @@ export default class MenuView extends JetView {
                 { id:"calendar", value:"My Calendar" }
             ],
             template:(obj)=>{
-				return _(obj.value)};
-			}
+                return _(obj.value)};
+            }
         };
     }
 }
@@ -587,7 +680,7 @@ If you want your app to be multilingual and let the users to choose a language, 
 To set a new language, use the **setLang\(\)** method of the _locale_ service. **setLocale\(\)** takes one parameter - the name of the locale file. When a user chooses a language, a locale file is located and the app language is changed.
 
 {% hint style="danger" %}
-Do not call **setLang()** in lifetime handlers of JetView! It calls [app.refresh\(\)](jetapp-api.md#app-refresh) that re-renders all the views, which will start an infinite loop.
+Do not call **setLang\(\)** in lifetime handlers of JetView! It calls [app.refresh\(\)](jetapp-api.md#app-refresh) that re-renders all the views, which will start an infinite loop.
 {% endhint %}
 
 Let's create a simple page for app settings with a segmented button that will be used to choose languages. Note that the IDs of the button options should be the same as the locale file names \(e.g. "es", "en"\).
@@ -614,8 +707,8 @@ export default class SettingsView extends JetView {
 
 **toggleLanguage\(\)** is a class method that will:
 
-- get the value of the segmented button,
-- pass it to **setLang\(\)** that will set the locale.
+* get the value of the segmented button,
+* pass it to **setLang\(\)** that will set the locale.
 
 ```javascript
 // views/settings.js
@@ -674,6 +767,45 @@ You can also set **path** to a subfolder \(subpath\) inside the _jet-locale_ fol
 // app.js
 ...
 app.use(plugins.Locale, { path:"some" });
+```
+
+You can also disable locale loading from *jet-locales* using the same setting:
+
+```js
+app.use(plugins.Locale, { path:false });
+```
+
+#### Combining with Webix Locales
+
+The Locale plugin has the additional setting for using Webix locales alongside with the Jet app locale.
+
+```js
+app.use(plugins.Locale, {
+	webix:{
+		en:"en-US",
+		// ...other locales
+	}
+});
+// calls webix.i18n.setLocale("en-US")
+```
+
+#### Splitting Localization
+
+If a lot of text in your app needs to be translated, you can split localizations and load them when they are needed. The source of a locale can be anything, e.g. inline or a result of an AJAX request:
+
+```js
+webix.ajax("/server/en/forms").then(data => {
+    data = data.json();
+    this.app.getService("locale").setLangData("en", data);
+});
+```
+
+#### Configuring Polyglot
+
+The Locale plugin uses the [Polyglot library](http://airbnb.io/polyglot.js/), which has settings of its own. You can use these settings in the config of the plugin:
+
+```js
+this.use(plugins.Locale, { polyglot:{ /* ...Polyglot settings */ } });
 ```
 
 ## 2. Custom Plugins

@@ -13,42 +13,53 @@ Let's look at an example of configuring Webix Jet to work with the Apache Tomcat
 **Prerequisites:**
 
 1. There is a Java app on your Tomcat server, configured to your needs.
-2. There is a Webix Jet app (you can use the [jet-start package](https://github.com/webix-hub/jet-start)).
+2. There is a Webix Jet app \(you can use the [jet-start package](https://github.com/webix-hub/jet-start)\).
 
 You need to let the Webix Jet app access the Java app. Set the **proxy** path in **webpack.config.js**. Replace this:
 
-```js
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
+```javascript
 devServer:{
     stats:"errors-only"
 }
 ```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
 with this:
 
-```js
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
+```javascript
 devServer:{
     stats:"errors-only",
     proxy: {
         "/server":{
             target: 'http://localhost:9200',
             pathRewrite: {"^/server" : ""}
-        }	
+        }    
     }
 }
 ```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
-"http://localhost:9200" is the web path to the Java server side.
+"[http://localhost:9200](http://localhost:9200)" is the web path to the Java server side.
 
 This configuration will make it possible to set the path to the server as:
 
-```js
-// models/mydata.js
+{% code-tabs %}
+{% code-tabs-item title="models/mydata.js" %}
+```javascript
 export const mydata = new webix.DataCollection({        
     url:"/server/mydata"
 })
 ```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
-This will load the data from "http://localhost:9200/mydata".
+This will load the data from "[http://localhost:9200/mydata](http://localhost:9200/mydata)".
 
 Both servers can be run separately and at the same time. The Webix Jet app will be able to communicate with the server-side code as they both are run by the same server.
 
@@ -56,8 +67,9 @@ Both servers can be run separately and at the same time. The Webix Jet app will 
 
 By default, the app is built with one start file \(_admin.js_ in this example\):
 
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
 ```javascript
-/* webpack.config.js */
 ...
 var config = {
     entry: "./sources/admin.js",
@@ -69,11 +81,14 @@ var config = {
 }
 ...
 ```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
 To create multiple entry files, pass an object to **entry** in config. For output filenames, use the _\[name\]_ substitution to ensure that each file has a unique name:
 
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
 ```javascript
-/* webpack.config.js */
 {
     entry: {
         admin: "./sources/admin.js",
@@ -85,15 +100,18 @@ To create multiple entry files, pass an object to **entry** in config. For outpu
     }
 }
 ```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
-## Turning Off Localization and Views
+## Turning Off Localization
 
-If you aren't planning to localize the app, there is a way to do it without creating an empty folder for locales. Without changes in Webpack config, you would have to do that. Webpack config has the **resolve** property, the options for locating modules. It tells Webpack where to look for views and locales.
+If you do not want to localize the app and do not want to create an empty **locales** folder, you can change the Webpack config.
 
-By default, Webpack loads views from the **views** folder like this: _require\("jet-views/"+name\)_. _resolve.alias_ settings in webpack.config makes it so:
+By default, Webpack tries to resolve the locales in _sources/locales_. Delete the `jet-locales` alias:
 
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
 ```javascript
-/* webpack.config.js */
 var config = {
     ...
     resolve: {
@@ -101,14 +119,59 @@ var config = {
         modules: ["./sources", "node_modules"],
         alias:{
             "jet-views":path.resolve(__dirname, "sources/views"),
-            "jet-locales":path.resolve(__dirname, "sources/locales") //change me
+            "jet-locales":path.resolve(__dirname, "sources/locales") // !
         }
     },
     ...
 }
 ```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
-An alias is used instead of hardcoding the _"/views"_ path to make this part configurable. If necessary, you can change **webpack.config** and define new folders for loading views.
+Next tell Webpack to ignore `jet-locales` while compiling the app. Use the [**IgnorePlugin**](https://webpack.js.org/plugins/ignore-plugin/) for this:
 
-For example, you can change the path in _"jet-locales"_.
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
+```javascript
+...
+plugins: [
+    new MiniCssExtractPlugin({
+        filename:"[name].css"
+    }),
+    new webpack.DefinePlugin({
+        VERSION: `"${pack.version}"`,
+        APPNAME: `"${pack.name}"`,
+        PRODUCTION : production,
+        BUILD_AS_MODULE : (asmodule || standalone)
+    }),
+    new webpack.IgnorePlugin(/jet-locales/)    // !
+]
+```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
+
+Now the app will be compiled without the locales.
+
+## Changing Paths tor Locales and Views
+
+By default, views and locales are stores in **sources/views** and **sources/locales** correspondingly. If you want your app structure to be different, you can change the paths to views and locales in the Webpack config file:
+
+{% code-tabs %}
+{% code-tabs-item title="webpack.config.js" %}
+```javascript
+var config = {
+    ...
+    resolve: {
+        extensions: [".js"],
+        modules: ["./sources", "node_modules"],
+        alias:{
+            "jet-views":path.resolve(__dirname, "sources/components"),    // !
+            "jet-locales":path.resolve(__dirname, "sources/languages")     // !
+        }
+    },
+    ...
+}
+```
+{% endcode-tabs-item %}
+{% endcode-tabs %}
 
