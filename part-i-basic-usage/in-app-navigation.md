@@ -149,8 +149,8 @@ This is all about Webix Jet in a nutshell.
 You can also read these sections of Part II:
 
 * [Navigation](../part-ii-webix-jet-in-details/navigation.md)
-* [JetApp API](../part-ii-webix-jet-in-details/jetapp-api.md)
-* [JetView API](../part-ii-webix-jet-in-details/jetview-api.md)
+* [JetApp API](../part-iv-jetview-and-jetapp-api/jetapp-api.md)
+* [JetView API](../part-iv-jetview-and-jetapp-api/jetview-api.md)
 
 ## Footnotes
 

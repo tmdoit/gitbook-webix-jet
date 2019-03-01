@@ -140,7 +140,7 @@ You can read these sections of Part II:
 
 * [App Config](../part-ii-webix-jet-in-details/app-config.md)
 * [Routers](../part-ii-webix-jet-in-details/routers.md)
-* [JetApp API](../part-ii-webix-jet-in-details/jetapp-api.md)
+* [JetApp API](../part-iv-jetview-and-jetapp-api/jetapp-api.md)
 * [Webpack Configuration](../part-iii-practical-tasks/webpack-configuration.md)
 
 ### Footnotes
